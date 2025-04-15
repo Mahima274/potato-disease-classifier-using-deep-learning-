@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 import os
+import requests
 from data_manager import DataManager
 from datetime import datetime
 import pandas as pd
@@ -34,6 +35,7 @@ if offline_predictions:
 
 # Initialize session state
 init_session_state()
+
 
 # Care instructions database
 CARE_GUIDE = {
@@ -123,11 +125,11 @@ CARE_GUIDE = {
 
 # Function to load and preprocess the model
 @st.cache_resource
-def load_model():
+def load_model(model_path):
     try:
         # Suppress TF warnings during model loading
         tf.get_logger().setLevel('ERROR')
-        model = tf.keras.models.load_model('potato_plant_model.h5')
+        model = tf.keras.models.load_model(model_path)
         # Compile the model with metrics to avoid warning
         model.compile(optimizer='adam', 
                      loss='categorical_crossentropy',
@@ -492,8 +494,17 @@ def show_potato_disease_page():
         3. Provide care instructions based on the result
         """)
 
+        # Download model if not exists
+        model_url = "https://file.io/your_actual_link"
+        model_path = "potato_plant_model.h5"
+
+        if not os.path.exists(model_path):
+            response = requests.get(model_url)
+            with open(model_path, "wb") as f:
+                f.write(response.content)
+
         # Load the model
-        model = load_model()
+        model = load_model(model_path)
         if model is None:
             return
 
@@ -528,6 +539,7 @@ def show_potato_disease_page():
                 st.write("- Ensure good lighting")
                 st.write("- Keep the camera steady")
                 st.write("- Focus on the leaf area")
+
 
     elif selected_feature == "History":
         st.title("📊 Prediction History")
@@ -995,3 +1007,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
